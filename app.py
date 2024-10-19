@@ -1,17 +1,20 @@
-# app.py
 import streamlit as st
-from chatbot import Chatbot
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# Initialize the chatbot
-chatbot = Chatbot()
+# Load the Hugging Face model
+model_name = "microsoft/DialoGPT-medium"
+model = AutoModelForCausalLM.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-# Title of the web app
-st.title("Professional Chatbot")
+st.title("Chatbot using Streamlit and Hugging Face")
 
-# Text input from user
-user_input = st.text_input("You: ", "")
+# Get user input
+user_input = st.text_input("You:", "Hello, chatbot!")
 
-# Display the chatbot response
 if user_input:
-    response = chatbot.generate_response(user_input)
-    st.text_area("Bot:", value=response, height=200, max_chars=None)
+    # Generate response from the model
+    input_ids = tokenizer.encode(user_input, return_tensors='pt')
+    output = model.generate(input_ids, max_length=1000, pad_token_id=tokenizer.eos_token_id)
+    response = tokenizer.decode(output[:, input_ids.shape[-1]:][0], skip_special_tokens=True)
+
+    st.text_area("Chatbot:", value=response, height=200)
